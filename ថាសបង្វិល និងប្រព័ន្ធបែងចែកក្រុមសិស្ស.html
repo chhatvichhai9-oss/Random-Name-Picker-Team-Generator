@@ -1,531 +1,669 @@
-<!DOCTYPE html>
-<html lang="km">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ថាសបង្វិល និងប្រព័ន្ធបែងចែកក្រុមសិស្ស</title>
-    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;600;700&family=Moul&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <style>
-        * { box-sizing: border-box; font-family: 'Kantumruy Pro', sans-serif; }
-        body { background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        h1 { text-align: center; font-family: 'Moul', cursive; color: #1a5276; margin-bottom: 25px; }
-        .container { display: grid; grid-template-columns: 360px 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
-        .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .panel h2 { font-size: 1.1rem; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-top: 0; }
-        .form-group { margin-bottom: 12px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
-        input[type="text"], input[type="number"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; }
-        button { background-color: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.2s; }
-        button:hover { background-color: #219150; }
-        .btn-group-gen { background-color: #e67e22; margin-top: 10px; }
-        .btn-group-gen:hover { background-color: #d35400; }
-        .item-list { max-height: 140px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee; padding: 5px; border-radius: 6px; }
-        .item-tag { display: flex; justify-content: space-between; align-items: center; background: #eef2f7; padding: 6px 10px; margin-bottom: 5px; border-radius: 4px; font-size: 0.85rem; }
-        .item-tag button { width: auto; padding: 2px 6px; background: #e74c3c; font-size: 0.75rem; }
-        .main-area { display: flex; flex-direction: column; gap: 20px; }
-        .wheels-area { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .wheel-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .canvas-container { position: relative; width: 280px; height: 280px; margin: 0 auto 15px auto; }
-        canvas { width: 100%; height: 100%; border-radius: 50%; }
-        .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #e74c3c; z-index: 10; }
-        .btn-spin { background-color: #2980b9; font-size: 1rem; padding: 10px; }
-        .btn-spin:hover { background-color: #1f6391; }
-        .result-box { margin-top: 12px; padding: 10px; background: #f8f9fa; border-radius: 6px; min-height: 45px; font-weight: bold; color: #2c3e50; font-size: 0.95rem; }
-        .result-box img { max-width: 100%; max-height: 100px; border-radius: 6px; margin-top: 5px; }
-        .groups-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 15px; }
-        .group-card { border: 1px solid #e0e0e0; border-top: 4px solid #3498db; border-radius: 8px; padding: 12px; background: #fafafa; }
-        .group-card h4 { margin: 0 0 8px 0; color: #2c3e50; font-size: 1rem; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
-        .group-card ul { list-style-type: none; padding-left: 0; margin: 0; font-size: 0.88rem; }
-        .group-card li { padding: 4px 0; display: flex; justify-content: space-between; }
-        .badge-m { color: #2980b9; font-weight: bold; }
-        .badge-f { color: #e84393; font-weight: bold; }
-
-        /* Modal / Popup Styling */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-card { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.3s ease; }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal-card h3 { margin-top: 0; color: #1a5276; font-size: 1.2rem; }
-        .modal-result { font-size: 1.3rem; font-weight: bold; color: #e74c3c; margin: 15px 0; word-break: break-word; }
-        .modal-result img { max-width: 100%; max-height: 150px; border-radius: 8px; margin-top: 10px; }
-        .modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        .btn-modal-spin { background-color: #2980b9; }
-        .btn-modal-remove { background-color: #e74c3c; }
-        .btn-modal-remove:hover { background-color: #c0392b; }
-        .btn-modal-close { background-color: #7f8c8d; }
-        .btn-modal-close:hover { background-color: #626567; }
-
-        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .wheels-area { grid-template-columns: 1fr; } }
-    </style>
-</head>
-<body>
-
-    <h1>ថាសបង្វិល និងប្រព័ន្ធបែងចែកក្រុមសិស្ស</h1>
-
-    <div class="container">
-        <div class="panel">
-            <h2>១. បញ្ចូលឈ្មោះសិស្ស (រៀបរៀងដោយ VI CHHAI)</h2>
-            <div class="form-group">
-                <input type="text" id="studentName" placeholder="ឈ្មោះសិស្ស...">
-            </div>
-            <div class="form-group">
-                <select id="studentGender">
-                    <option value="ប្រុស">ប្រុស</option>
-                    <option value="ស្រី">ស្រី</option>
-                </select>
-            </div>
-            <button onclick="addStudent()">បន្ថែមសិស្ស</button>
-
-            <div class="form-group" style="margin-top: 12px;">
-                <label style="font-size: 0.85rem; color: #1f7244;">📥 ឬនាំចូលពី Excel (.xlsx, .xls)៖</label>
-                <input type="file" id="excelFile" accept=".xlsx, .xls" style="font-size:0.8rem;">
-            </div>
-
-            <div class="item-list" id="studentList"></div>
-
-            <h2 style="margin-top: 20px;">២. កំណត់ក្រុមសិស្ស</h2>
-            <div class="form-group">
-                <label for="numGroups">ចំនួនក្រុមដែលត្រូវចែក៖</label>
-                <input type="number" id="numGroups" value="2" min="1" max="10">
-            </div>
-            <button class="btn-group-gen" onclick="generateEqualGroups()">បែងចែកក្រុម (ប្រុស-ស្រីស្មើគ្នា)</button>
-
-            <h2 style="margin-top: 20px;">៣. បញ្ចូលលំហាត់ (យ៉ាងតិច ១០)</h2>
-            <div class="form-group">
-                <input type="text" id="exerciseText" placeholder="ចំណងជើង/ខ្លឹមសារលំហាត់...">
-            </div>
-            <div class="form-group">
-                <label style="font-size: 0.8rem;">ឬ Upload រូបភាព៖</label>
-                <input type="file" id="exerciseImage" accept="image/*">
-            </div>
-            <button onclick="addExercise()">បន្ថែមលំហាត់</button>
-            <div class="item-list" id="exerciseList"></div>
-        </div>
-
-        <div class="main-area">
-            <div class="wheels-area">
-                <div class="wheel-card">
-                    <h3 style="margin-top:0;">ថាសបង្វិលឈ្មោះសិស្ស</h3>
-                    <div class="canvas-container">
-                        <div class="pointer"></div>
-                        <canvas id="studentCanvas" width="280" height="280"></canvas>
-                    </div>
-                    <button class="btn-spin" onclick="spinWheel('student')">បង្វិលជ្រើសរើសសិស្ស</button>
-                    <div class="result-box" id="studentResult">លទ្ធផលសិស្ស...</div>
-                </div>
-
-                <div class="wheel-card">
-                    <h3 style="margin-top:0;">ថាសបង្វិលលំហាត់</h3>
-                    <div class="canvas-container">
-                        <div class="pointer"></div>
-                        <canvas id="exerciseCanvas" width="280" height="280"></canvas>
-                    </div>
-                    <button class="btn-spin" onclick="spinWheel('exercise')" style="background-color: #8e44ad;">បង្វិលជ្រើសរើសលំហាត់</button>
-                    <div class="result-box" id="exerciseResult">លទ្ធផលលំហាត់...</div>
-                </div>
-            </div>
-
-            <div class="groups-container">
-                <h2 style="margin-top:0; color:#2c3e50; font-size: 1.2rem;">បញ្ជីក្រុមដែលបានបែងចែក</h2>
-                <div class="groups-grid" id="groupsGrid">
-                    <div style="color: #7f8c8d; font-size: 0.9rem;">សូមចុចប៊ូតុង "បែងចែកក្រុម" ដើម្បីបង្កើតក្រុមដោយស្វ័យប្រវត្តិ។</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Popup Modal សម្រាប់បង្ហាញលទ្ធផល -->
-    <div class="modal-overlay" id="resultModal">
-        <div class="modal-card">
-            <h3 id="modalTitle">🎉 លទ្ធផលដែលបានជ្រើសរើស</h3>
-            <div class="modal-result" id="modalResultText"></div>
-            <div class="modal-actions">
-                <button class="btn-modal-spin" onclick="spinAgain()">🔄 បង្វិលម្ដងទៀត</button>
-                <button class="btn-modal-remove" id="btnRemoveSpin" onclick="removeAndSpinAgain()">❌ លុបចេញពីថាស រួចបង្វិលម្ដងទៀត</button>
-                <button class="btn-modal-close" onclick="closeModal()">បិទ</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // បញ្ជីសិស្សដើម (Master List)
-        let masterStudents = [
-            { name: "សុខ ជា", gender: "ប្រុស" },
-            { name: "កែវ វិចិត្រ", gender: "ប្រុស" },
-            { name: "ហេង រតនា", gender: "ប្រុស" },
-            { name: "ចាន់ ធីដា", gender: "ស្រី" },
-            { name: "លី ណារី", gender: "ស្រី" },
-            { name: "អ៊ឹម សុភា", gender: "ស្រី" }
-        ];
-
-        // បញ្ជីសិស្សសម្រាប់ថាសបង្វិល (អាចលុបចេញបណ្ដោះអាសន្នពេលបង្វិល)
-        let wheelStudents = [...masterStudents];
-
-        let exercises = Array.from({ length: 10 }, (_, i) => ({
-            text: `លំហាត់ទី ${i + 1}`,
-            image: null
-        }));
-
-        const colors = ['#f39c12', '#e74c3c', '#9b59b6', '#3498db', '#1abc9c', '#2ecc71', '#e67e22', '#34495e'];
-        let isSpinning = { student: false, exercise: false };
-        let currentAngles = { student: 0, exercise: 0 };
-        let currentActiveType = null; // 'student' ឬ 'exercise'
-        let lastSelectedIndex = -1;
-
-        window.onload = () => {
-            renderStudentList();
-            renderExerciseList();
-            drawWheel('student');
-            drawWheel('exercise');
-
-            document.getElementById('excelFile').addEventListener('change', handleExcelUpload);
-        };
-
-        function handleExcelUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-                if (jsonData.length === 0) return alert('ឯកសារ Excel គ្មានទិន្នន័យទេ!');
-
-                let importedStudents = [];
-                jsonData.forEach(row => {
-                    let nameKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'ឈ្មោះ' || k.trim().toLowerCase() === 'name');
-                    let genderKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'ភេទ' || k.trim().toLowerCase() === 'gender');
-
-                    let nameVal = nameKey ? row[nameKey] : Object.values(row)[0];
-                    let genderVal = genderKey ? row[genderKey] : 'ប្រុស';
-
-                    if (nameVal && String(nameVal).trim() !== '') {
-                        let g = String(genderVal).trim();
-                        if (g === 'F' || g === 'f' || g === 'female' || g === 'Female' || g === 'ស្រី') {
-                            g = 'ស្រី';
-                        } else {
-                            g = 'ប្រុស';
-                        }
-                        importedStudents.push({ name: String(nameVal).trim(), gender: g });
-                    }
-                });
-
-                if (importedStudents.length > 0) {
-                    masterStudents = importedStudents;
-                    wheelStudents = [...masterStudents];
-                    renderStudentList();
-                    drawWheel('student');
-                    alert(`ទាញយកឈ្មោះសិស្សបានជោគជ័យចំនួន ${importedStudents.length} នាក់!`);
-                } else {
-                    alert('មិនអាចរកឃើញចន្លោះឈ្មោះសិស្សក្នុង Excel ទេ។ សូមប្រាកដថា Header មានពាក្យ "ឈ្មោះ" ឬ "Name"');
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        function addStudent() {
-            const nameInput = document.getElementById('studentName');
-            const genderInput = document.getElementById('studentGender');
-            if (!nameInput.value.trim()) return alert('សូមបញ្ចូលឈ្មោះសិស្ស!');
-            
-            const newStudent = { name: nameInput.value.trim(), gender: genderInput.value };
-            masterStudents.push(newStudent);
-            wheelStudents.push(newStudent);
-            
-            nameInput.value = '';
-            renderStudentList();
-            drawWheel('student');
-        }
-
-        function removeStudent(index) {
-            masterStudents.splice(index, 1);
-            wheelStudents = [...masterStudents];
-            renderStudentList();
-            drawWheel('student');
-        }
-
-        function renderStudentList() {
-            const container = document.getElementById('studentList');
-            container.innerHTML = masterStudents.map((s, i) => `
-                <div class="item-tag">
-                    <span>${s.name} (${s.gender})</span>
-                    <button onclick="removeStudent(${i})">លុប</button>
-                </div>
-            `).join('');
-        }
-
-        function generateEqualGroups() {
-            const groupCount = parseInt(document.getElementById('numGroups').value);
-            if (isNaN(groupCount) || groupCount < 1) return alert('សូមបញ្ចូលចំនួនក្រុមឱ្យបានត្រឹមត្រូវ!');
-            if (masterStudents.length < groupCount) return alert('ចំនួនសិស្សតិចជាងចំនួនក្រុម!');
-
-            let males = shuffleArray(masterStudents.filter(s => s.gender === 'ប្រុស'));
-            let females = shuffleArray(masterStudents.filter(s => s.gender === 'ស្រី'));
-
-            let groups = Array.from({ length: groupCount }, () => []);
-            let currentGroupIndex = 0;
-            let direction = 1;
-
-            males.forEach(student => {
-                groups[currentGroupIndex].push(student);
-                if (groupCount > 1) {
-                    currentGroupIndex += direction;
-                    if (currentGroupIndex === groupCount) {
-                        currentGroupIndex = groupCount - 1;
-                        direction = -1;
-                    } else if (currentGroupIndex === -1) {
-                        currentGroupIndex = 0;
-                        direction = 1;
-                    }
-                }
-            });
-
-            females.forEach(student => {
-                groups[currentGroupIndex].push(student);
-                if (groupCount > 1) {
-                    currentGroupIndex += direction;
-                    if (currentGroupIndex === groupCount) {
-                        currentGroupIndex = groupCount - 1;
-                        direction = -1;
-                    } else if (currentGroupIndex === -1) {
-                        currentGroupIndex = 0;
-                        direction = 1;
-                    }
-                }
-            });
-
-            renderGroups(groups);
-        }
-
-        function shuffleArray(array) {
-            let arr = [...array];
-            for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
-            }
-            return arr;
-        }
-
-        function renderGroups(groups) {
-            const container = document.getElementById('groupsGrid');
-            container.innerHTML = groups.map((group, i) => {
-                const maleCount = group.filter(s => s.gender === 'ប្រុស').length;
-                const femaleCount = group.filter(s => s.gender === 'ស្រី').length;
-
-                return `
-                    <div class="group-card">
-                        <h4>ក្រុមទី ${i + 1} (${group.length}នាក់)</h4>
-                        <div style="font-size:0.75rem; color:#666; margin-bottom:6px;">
-                            ប្រុស: ${maleCount} | ស្រី: ${femaleCount}
-                        </div>
-                        <ul>
-                            ${group.map(s => `
-                                <li>
-                                    <span>${s.name}</span>
-                                    <span class="${s.gender === 'ប្រុស' ? 'badge-m' : 'badge-f'}">(${s.gender})</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function addExercise() {
-            const textInput = document.getElementById('exerciseText');
-            const fileInput = document.getElementById('exerciseImage');
-
-            if (!textInput.value.trim() && !fileInput.files[0]) {
-                return alert('សូមបញ្ចូលអត្ថបទ ឬជ្រើសរើសរូបភាពលំហាត់!');
-            }
-
-            if (fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    exercises.push({ text: textInput.value.trim() || 'រូបភាពលំហាត់', image: e.target.result });
-                    resetExerciseInput();
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                exercises.push({ text: textInput.value.trim(), image: null });
-                resetExerciseInput();
-            }
-        }
-
-        function resetExerciseInput() {
-            document.getElementById('exerciseText').value = '';
-            document.getElementById('exerciseImage').value = '';
-            renderExerciseList();
-            drawWheel('exercise');
-        }
-
-        function removeExercise(index) {
-            exercises.splice(index, 1);
-            renderExerciseList();
-            drawWheel('exercise');
-        }
-
-        function renderExerciseList() {
-            const container = document.getElementById('exerciseList');
-            container.innerHTML = exercises.map((ex, i) => `
-                <div class="item-tag">
-                    <span>${ex.text} ${ex.image ? '📷' : ''}</span>
-                    <button onclick="removeExercise(${i})">លុប</button>
-                </div>
-            `).join('');
-        }
-
-        function drawWheel(type) {
-            const canvas = document.getElementById(type === 'student' ? 'studentCanvas' : 'exerciseCanvas');
-            const ctx = canvas.getContext('2d');
-            const items = type === 'student' ? wheelStudents : exercises;
-            const numItems = items.length;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            if (numItems === 0) {
-                ctx.beginPath();
-                ctx.arc(140, 140, 130, 0, 2 * Math.PI);
-                ctx.fillStyle = '#e0e0e0';
-                ctx.fill();
-                ctx.fillStyle = '#7f8c8d';
-                ctx.font = "bold 14px Kantumruy Pro";
-                ctx.textAlign = "center";
-                ctx.fillText("អស់ទិន្នន័យ", 140, 145);
-                return;
-            }
-
-            const arcSize = (2 * Math.PI) / numItems;
-
-            for (let i = 0; i < numItems; i++) {
-                const angle = currentAngles[type] + i * arcSize;
-                ctx.beginPath();
-                ctx.arc(140, 140, 130, angle, angle + arcSize);
-                ctx.lineTo(140, 140);
-                ctx.fillStyle = colors[i % colors.length];
-                ctx.fill();
-                ctx.stroke();
-
-                ctx.save();
-                ctx.translate(140, 140);
-                ctx.rotate(angle + arcSize / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "white";
-                ctx.font = "bold 12px Kantumruy Pro";
-                
-                let label = type === 'student' ? items[i].name : items[i].text;
-                if (label.length > 12) label = label.substring(0, 10) + '...';
-                ctx.fillText(label, 120, 4);
-                ctx.restore();
-            }
-        }
-
-        function spinWheel(type) {
-            if (isSpinning[type]) return;
-
-            const items = type === 'student' ? wheelStudents : exercises;
-            if (items.length === 0) return alert('មិនទាន់មានទិន្នន័យសម្រាប់បង្វិលទេ!');
-
-            currentActiveType = type;
-            isSpinning[type] = true;
-            const spinDuration = 4000;
-            const startAngle = currentAngles[type];
-            const extraDegrees = Math.floor(Math.random() * 360) + 1440;
-            const targetAngle = startAngle + (extraDegrees * Math.PI / 180);
-            const startTime = performance.now();
-
-            function animate(currentTime) {
-                const elapsed = currentTime - startTime;
-                if (elapsed < spinDuration) {
-                    const progress = elapsed / spinDuration;
-                    const factor = 1 - Math.pow(1 - progress, 3);
-                    currentAngles[type] = startAngle + (targetAngle - startAngle) * factor;
-                    drawWheel(type);
-                    requestAnimationFrame(animate);
-                } else {
-                    currentAngles[type] = targetAngle % (2 * Math.PI);
-                    drawWheel(type);
-                    isSpinning[type] = false;
-                    showResult(type);
-                }
-            }
-            requestAnimationFrame(animate);
-        }
-
-        function showResult(type) {
-            const items = type === 'student' ? wheelStudents : exercises;
-            const numItems = items.length;
-            const arcSize = (2 * Math.PI) / numItems;
-
-            let effectiveAngle = (1.5 * Math.PI - currentAngles[type]) % (2 * Math.PI);
-            if (effectiveAngle < 0) effectiveAngle += 2 * Math.PI;
-
-            lastSelectedIndex = Math.floor(effectiveAngle / arcSize) % numItems;
-            const result = items[lastSelectedIndex];
-
-            if (type === 'student') {
-                const textContent = `${result.name} (${result.gender})`;
-                document.getElementById('studentResult').innerHTML = 
-                    `🎉 សិស្សដែលជ្រើសរើស៖ <span style="color:#e74c3c;">${result.name}</span> (${result.gender})`;
-                openModal('🎉 ឈ្មោះសិស្សដែលបានជ្រើសរើស', textContent);
-            } else {
-                let html = `🎯 លំហាត់ដែលទទួលបាន៖ <br><span style="color:#8e44ad;">${result.text}</span>`;
-                let modalHtml = `${result.text}`;
-                if (result.image) {
-                    html += `<br><img src="${result.image}" alt="លំហាត់">`;
-                    modalHtml += `<br><img src="${result.image}" alt="លំហាត់">`;
-                }
-                document.getElementById('exerciseResult').innerHTML = html;
-                openModal('🎯 លំហាត់ដែលបានជ្រើសរើស', modalHtml);
-            }
-        }
-
-        // --- Modal Control Functions ---
-        function openModal(title, content) {
-            document.getElementById('modalTitle').innerText = title;
-            document.getElementById('modalResultText').innerHTML = content;
-            document.getElementById('resultModal').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('resultModal').style.display = 'none';
-        }
-
-        function spinAgain() {
-            closeModal();
-            spinWheel(currentActiveType);
-        }
-
-        function removeAndSpinAgain() {
-            if (lastSelectedIndex === -1 || !currentActiveType) return;
-
-            if (currentActiveType === 'student') {
-                wheelStudents.splice(lastSelectedIndex, 1);
-                drawWheel('student');
-                if (wheelStudents.length === 0) {
-                    closeModal();
-                    alert('អស់ឈ្មោះសិស្សក្នុងថាសបង្វិលហើយ!');
-                    return;
-                }
-            } else if (currentActiveType === 'exercise') {
-                exercises.splice(lastSelectedIndex, 1);
-                renderExerciseList();
-                drawWheel('exercise');
-                if (exercises.length === 0) {
-                    closeModal();
-                    alert('អស់លំហាត់ក្នុងថាសបង្វិលហើយ!');
-                    return;
-                }
-            }
-
-            closeModal();
-            spinWheel(currentActiveType);
-        }
-    </script>
-</body>
+<!DOCTYPE html>  
+<html lang="km">  
+<head>  
+ <meta charset="UTF-8">  
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+ <title>ថាសបង្វិល និងប្រព័ន្ធបែងចែកក្រុមសិស្ស</title>  
+ <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;600;700&family=Moul&display=swap" rel="stylesheet">  
+ <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>  
+ <style>  
+ * { box-sizing: border-box; font-family: 'Kantumruy Pro', sans-serif; }  
+ body { background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }  
+ h1 { text-align: center; font-family: 'Moul', cursive; color: #1a5276; margin-bottom: 25px; }  
+ .container { display: grid; grid-template-columns: 360px 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }  
+ .panel { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }  
+ .panel h2 { font-size: 1.1rem; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-top: 0; }  
+ .form-group { margin-bottom: 12px; }  
+ label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }  
+ input[type="text"], input[type="number"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; }  
+ button { background-color: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.2s; }  
+ button:hover { background-color: #219150; }  
+   
+.btn-clear-all { background-color: #e74c3c; margin-top: 8px; font-size: 0.85rem; padding: 8px; }  
+ .btn-clear-all:hover { background-color: #c0392b; }  
+  
+ .btn-group-gen { background-color: #e67e22; margin-top: 10px; }  
+ .btn-group-gen:hover { background-color: #d35400; }  
+ .item-list { max-height: 180px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee; padding: 5px; border-radius: 6px; }  
+ .item-tag { display: flex; justify-content: space-between; align-items: center; background: #eef2f7; padding: 6px 10px; margin-bottom: 5px; border-radius: 4px; font-size: 0.85rem; }  
+ .item-tag button { width: auto; padding: 2px 6px; background: #e74c3c; font-size: 0.75rem; }  
+ .main-area { display: flex; flex-direction: column; gap: 20px; }  
+ .wheels-area { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }  
+ .wheel-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }  
+ .canvas-container { position: relative; width: 280px; height: 280px; margin: 0 auto 15px auto; }  
+ canvas { width: 100%; height: 100%; border-radius: 50%; }  
+ .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #e74c3c; z-index: 10; }  
+ .btn-spin { background-color: #2980b9; font-size: 1rem; padding: 10px; }  
+ .btn-spin:hover { background-color: #1f6391; }  
+ .result-box { margin-top: 12px; padding: 10px; background: #f8f9fa; border-radius: 6px; min-height: 45px; font-weight: bold; color: #2c3e50; font-size: 0.95rem; }  
+ .result-box img { max-width: 100%; max-height: 100px; border-radius: 6px; margin-top: 5px; }  
+ .groups-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }  
+ .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 15px; }  
+ .group-card { border: 1px solid #e0e0e0; border-top: 4px solid #3498db; border-radius: 8px; padding: 12px; background: #fafafa; }  
+ .group-card h4 { margin: 0 0 8px 0; color: #2c3e50; font-size: 1rem; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }  
+ .group-card ul { list-style-type: none; padding-left: 0; margin: 0; font-size: 0.88rem; }  
+ .group-card li { padding: 4px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #f0f0f0; }  
+ .badge-m { color: #2980b9; font-weight: bold; }  
+ .badge-f { color: #e84393; font-weight: bold; }  
+  
+ .class-checkbox-container { background: #fafafa; border: 1px solid #ccc; border-radius: 6px; padding: 8px; max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }  
+ .class-checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer; font-weight: normal; }  
+ .class-checkbox-item input { width: auto; cursor: pointer; }  
+  
+ .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }  
+ .modal-card { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.3s ease; }  
+ @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }  
+ .modal-card h3 { margin-top: 0; color: #1a5276; font-size: 1.2rem; }  
+ .modal-result { font-size: 1.3rem; font-weight: bold; color: #e74c3c; margin: 15px 0; word-break: break-word; }  
+ .modal-result img { max-width: 100%; max-height: 150px; border-radius: 8px; margin-top: 10px; }  
+ .modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }  
+ .btn-modal-spin { background-color: #2980b9; }  
+ .btn-modal-remove { background-color: #e74c3c; }  
+ .btn-modal-remove:hover { background-color: #c0392b; }  
+ .btn-modal-close { background-color: #7f8c8d; }  
+ .btn-modal-close:hover { background-color: #626567; }  
+  
+ @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .wheels-area { grid-template-columns: 1fr; } }  
+ </style>  
+</head>  
+<body>  
+  
+ <h1>ថាសបង្វិល និងប្រព័ន្ធបែងចែកក្រុមសិស្ស</h1>  
+  
+ <div class="container">  
+ <div class="panel">  
+ <h2>១. បញ្ចូលឈ្មោះសិស្ស (រៀបរៀងដោយ VI CHHAI)</h2>  
+ <div class="form-group">  
+ <input type="text" id="studentName" placeholder="ឈ្មោះសិស្ស...">  
+ </div>  
+ <div class="form-group">  
+ <select id="studentGender">  
+ <option value="ប្រុស">ប្រុស (ប)</option>  
+ <option value="ស្រី">ស្រី (ស)</option>  
+ </select>  
+ </div>  
+ <div class="form-group">  
+ <label>ថ្នាក់រៀន (ករណីបញ្ចូលក្នុង Excel គ្មានជួរឈរថ្នាក់)៖</label>  
+ <input type="text" id="studentClass" placeholder="ឧទាហរណ៍៖ 7A, 8A...12A" value="7A">  
+ </div>  
+ <button onclick="addStudent()">បន្ថែមសិស្ស</button>  
+  
+ <div class="form-group" style="margin-top: 12px;">  
+ <label style="font-size: 0.85rem; color: #1f7244;">📥 នាំចូលពី Excel (.xlsx, .xls)៖</label>  
+ <input type="file" id="excelFile" accept=".xlsx, .xls" style="font-size:0.8rem;">  
+ </div>  
+  
+ <div class="form-group" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">  
+ <label>🔍 ជ្រើសរើសថ្នាក់ដែលត្រូវបង្ហាញ / បង្វិល៖</label>  
+ <div class="class-checkbox-container" id="classCheckboxList"></div>  
+ </div>  
+  
+ <div class="item-list" id="studentList"></div>  
+ <button class="btn-clear-all" onclick="clearAllStudents()">🗑️ លុបឈ្មោះសិស្សទាំងអស់</button>  
+  
+ <h2 style="margin-top: 20px;">២. កំណត់ក្រុមសិស្ស</h2>  
+ <div class="form-group">  
+ <label for="numGroups">ចំនួនក្រុមដែលត្រូវចែក៖</label>  
+ <input type="number" id="numGroups" value="2" min="1" max="10">  
+ </div>  
+ <button class="btn-group-gen" onclick="generateEqualGroups()">បែងចែកក្រុម (ប្រុស-ស្រីស្មើគ្នា)</button>  
+  
+ <h2 style="margin-top: 20px;">៣. បញ្ចូលលំហាត់</h2>  
+ <div class="form-group">  
+ <input type="text" id="exerciseText" placeholder="ចំណងជើង/ខ្លឹមសារលំហាត់...">  
+ </div>  
+ <div class="form-group">  
+ <label style="font-size: 0.8rem;">ឬ Upload រូបភាព៖</label>  
+ <input type="file" id="exerciseImage" accept="image/*">  
+ </div>  
+ <button onclick="addExercise()">បន្ថែមលំហាត់</button>  
+ <div class="item-list" id="exerciseList"></div>  
+ </div>  
+  
+ <div class="main-area">  
+ <div class="wheels-area">  
+ <div class="wheel-card">  
+ <h3 style="margin-top:0;">ថាសបង្វិលឈ្មោះសិស្ស <br><span id="currentWheelClass" style="color:#e67e22; font-size:0.85rem;">(គ្រប់ថ្នាក់)</span></h3>  
+ <div class="canvas-container">  
+ <div class="pointer"></div>  
+ <canvas id="studentCanvas" width="280" height="280"></canvas>  
+ </div>  
+ <button class="btn-spin" onclick="spinWheel('student')">បង្វិលជ្រើសរើសសិស្ស</button>  
+ <div class="result-box" id="studentResult">លទ្ធផលសិស្ស...</div>  
+ </div>  
+  
+ <div class="wheel-card">  
+ <h3 style="margin-top:0;">ថាសបង្វិលលំហាត់</h3>  
+ <div class="canvas-container">  
+ <div class="pointer"></div>  
+ <canvas id="exerciseCanvas" width="280" height="280"></canvas>  
+ </div>  
+ <button class="btn-spin" onclick="spinWheel('exercise')" style="background-color: #8e44ad;">បង្វិលជ្រើសរើសលំហាត់</button>  
+ <div class="result-box" id="exerciseResult">លទ្ធផលលំហាត់...</div>  
+ </div>  
+ </div>  
+  
+ <div class="groups-container">  
+ <h2 style="margin-top:0; color:#2c3e50; font-size: 1.2rem;">បញ្ជីក្រុមដែលបានបែងចែក</h2>  
+ <div class="groups-grid" id="groupsGrid">  
+ <div style="color: #7f8c8d; font-size: 0.9rem;">សូមចុចប៊ូតុង "បែងចែកក្រុម" ដើម្បីបង្កើតក្រុមដោយស្វ័យប្រវត្តិ។</div>  
+ </div>  
+ </div>  
+ </div>  
+ </div>  
+  
+ <div class="modal-overlay" id="resultModal">  
+ <div class="modal-card">  
+ <h3 id="modalTitle">🎉 លទ្ធផលដែលបានជ្រើសរើស</h3>  
+ <div class="modal-result" id="modalResultText"></div>  
+ <div class="modal-actions">  
+ <button class="btn-modal-spin" onclick="spinAgain()">🔄 បង្វិលម្ដងទៀត</button>  
+ <button class="btn-modal-remove" id="btnRemoveSpin" onclick="removeAndSpinAgain()">❌ លុបចេញពីថាស រួចបង្វិលម្ដងទៀត</button>  
+ <button class="btn-modal-close" onclick="closeModal()">បិទ</button>  
+ </div>  
+ </div>  
+ </div>  
+  
+ <script>  
+ // ទាញយកទិន្នន័យពី LocalStorage ប្រសិនបើមាន  
+ let masterStudents = JSON.parse(localStorage.getItem('wheel_students')) || [];  
+  
+ let exercises = JSON.parse(localStorage.getItem('wheel_exercises')) || Array.from({ length: 5 }, (_, i) => ({  
+ text: `លំហាត់ទី ${i + 1}`,  
+ image: null  
+ }));  
+  
+ let selectedClasses = ["ALL"];  
+ let wheelStudents = [];  
+ const colors = ['#f39c12', '#e74c3c', '#9b59b6', '#3498db', '#1abc9c', '#2ecc71', '#e67e22', '#34495e'];  
+ let isSpinning = { student: false, exercise: false };  
+ let currentAngles = { student: 0, exercise: 0 };  
+ let currentActiveType = null;  
+ let lastSelectedIndex = -1;  
+  
+ window.onload = () => {  
+ renderClassCheckboxes();  
+ filterStudentWheelData();  
+ renderStudentList();  
+ renderExerciseList();  
+ drawWheel('student');  
+ drawWheel('exercise');  
+  
+ document.getElementById('excelFile').addEventListener('change', handleExcelUpload);  
+ };  
+  
+ function saveData() {  
+ localStorage.setItem('wheel_students', JSON.stringify(masterStudents));  
+ localStorage.setItem('wheel_exercises', JSON.stringify(exercises));  
+ }  
+  
+ // អនុគមន៍សំអាតប្រភេទភេទ (ប្រុស/ស្រី/ប/ស) ឱ្យបានច្បាស់លាស់  
+ function normalizeGender(val) {  
+ if (!val) return 'ប្រុស';  
+ let str = String(val).trim().toLowerCase();  
+ if (str === 'ស្រី' || str === 'ស' || str === 'f' || str === 'female' || str === 'srei') {  
+ return 'ស្រី';  
+ }  
+ return 'ប្រុស';  
+ }  
+  
+ function renderClassCheckboxes() {  
+ const container = document.getElementById('classCheckboxList');  
+ let classes = [...new Set(masterStudents.map(s => s.className || "7A"))].sort();  
+  
+ let html = `  
+ <label class="class-checkbox-item">  
+ <input type="checkbox" id="chk_all" value="ALL" ${selectedClasses.includes("ALL") ? "checked" : ""} onchange="onClassCheckboxChange(this)">  
+ <b>ជ្រើសរើសទាំងអស់ (ALL)</b>  
+ </label>  
+ `;  
+  
+ classes.forEach(c => {  
+ let isChecked = selectedClasses.includes("ALL") || selectedClasses.includes(c);  
+ html += `  
+ <label class="class-checkbox-item">  
+ <input type="checkbox" class="chk_class" value="${c}" ${isChecked ? "checked" : ""} onchange="onClassCheckboxChange(this)">  
+ ថ្នាក់ ${c}  
+ </label>  
+ `;  
+ });  
+  
+ container.innerHTML = html;  
+ }  
+  
+ function onClassCheckboxChange(e) {  
+ const allChk = document.getElementById('chk_all');  
+ const classChks = document.querySelectorAll('.chk_class');  
+  
+ if (e.value === "ALL") {  
+ if (e.checked) {  
+ classChks.forEach(chk => chk.checked = true);  
+ selectedClasses = ["ALL"];  
+ } else {  
+ classChks.forEach(chk => chk.checked = false);  
+ selectedClasses = [];  
+ }  
+ } else {  
+ let checkedVals = Array.from(classChks).filter(chk => chk.checked).map(chk => chk.value);  
+ if (checkedVals.length === classChks.length) {  
+ allChk.checked = true;  
+ selectedClasses = ["ALL"];  
+ } else {  
+ allChk.checked = false;  
+ selectedClasses = checkedVals;  
+ }  
+ }  
+  
+ filterStudentWheelData();  
+ renderStudentList();  
+ drawWheel('student');  
+ }  
+  
+ function filterStudentWheelData() {  
+ const classTextLabel = document.getElementById('currentWheelClass');  
+  
+ if (selectedClasses.includes("ALL") || selectedClasses.length === 0) {  
+ wheelStudents = [...masterStudents];  
+ classTextLabel.innerText = "(ជ្រើសរើស៖ គ្រប់ថ្នាក់)";  
+ } else {  
+ wheelStudents = masterStudents.filter(s => selectedClasses.includes(s.className || "7A"));  
+ classTextLabel.innerText = `(ជ្រើសរើស៖ ${selectedClasses.join(', ')})`;  
+ }  
+ }  
+  
+ function handleExcelUpload(e) {  
+ const fileInput = e.target;  
+ const file = fileInput.files[0];  
+ if (!file) return;  
+  
+ const reader = new FileReader();  
+ reader.onload = function(evt) {  
+ try {  
+ const data = new Uint8Array(evt.target.result);  
+ const workbook = XLSX.read(data, { type: 'array' });  
+ const firstSheetName = workbook.SheetNames[0];  
+ const worksheet = workbook.Sheets[firstSheetName];  
+ const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });  
+  
+ if (jsonData.length === 0) {  
+ alert('ឯកសារ Excel គ្មានទិន្នន័យទេ!');  
+ return;  
+ }  
+  
+ let importedStudents = [];  
+ let defaultClass = document.getElementById('studentClass').value.trim() || '7A';  
+  
+ jsonData.forEach(row => {  
+ let nameKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'ឈ្មោះ' || k.trim().toLowerCase() === 'name');  
+ let genderKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'ភេទ' || k.trim().toLowerCase() === 'gender');  
+ let classKey = Object.keys(row).find(k => k.trim().toLowerCase() === 'ថ្នាក់' || k.trim().toLowerCase() === 'class');  
+  
+ let nameVal = nameKey ? row[nameKey] : Object.values(row)[0];  
+ let genderVal = genderKey ? row[genderKey] : 'ប្រុស';  
+ let classVal = classKey && row[classKey] ? String(row[classKey]).trim() : defaultClass;  
+  
+ if (nameVal && String(nameVal).trim() !== '') {  
+ importedStudents.push({   
+name: String(nameVal).trim(),   
+gender: normalizeGender(genderVal),   
+className: String(classVal).trim()   
+});  
+ }  
+ });  
+  
+ if (importedStudents.length > 0) {  
+ masterStudents.push(...importedStudents);  
+ saveData();  
+ selectedClasses = ["ALL"];  
+ renderClassCheckboxes();  
+ filterStudentWheelData();  
+ renderStudentList();  
+ drawWheel('student');  
+   
+alert(`បានបន្ថែមសិស្សចំនួន ${importedStudents.length} នាក់ទៀតជោគជ័យ!\nសរុបសិស្សក្នុងប្រព័ន្ធមាន៖ ${masterStudents.length} នាក់។`);  
+ } else {  
+ alert('មិនអាចរកឃើញឈ្មោះសិស្សក្នុង Excel ទេ។ សូមពិនិត្យមើល Header ជួរឈរ!');  
+ }  
+ } catch (err) {  
+ alert('មានបញ្ហាក្នុងការអាន Excel! សូមពិនិត្យមើលទ្រង់ទ្រាយ File.');  
+ } finally {  
+ fileInput.value = '';  
+ }  
+ };  
+ reader.readAsArrayBuffer(file);  
+ }  
+  
+ function addStudent() {  
+ const nameInput = document.getElementById('studentName');  
+ const genderInput = document.getElementById('studentGender');  
+ const classInput = document.getElementById('studentClass');  
+  
+ if (!nameInput.value.trim()) return alert('សូមបញ្ចូលឈ្មោះសិស្ស!');  
+ const className = classInput.value.trim() || '7A';  
+  
+ const newStudent = {   
+name: nameInput.value.trim(),   
+gender: normalizeGender(genderInput.value),   
+className: className   
+};  
+   
+masterStudents.push(newStudent);  
+ saveData();  
+   
+nameInput.value = '';  
+ renderClassCheckboxes();  
+ filterStudentWheelData();  
+ renderStudentList();  
+ drawWheel('student');  
+ }  
+  
+ function removeStudent(originalIndex) {  
+ masterStudents.splice(originalIndex, 1);  
+ saveData();  
+ renderClassCheckboxes();  
+ filterStudentWheelData();  
+ renderStudentList();  
+ drawWheel('student');  
+ }  
+  
+ function clearAllStudents() {  
+ if (masterStudents.length === 0) return alert('គ្មានឈ្មោះសិស្សត្រូវលុបទេ!');  
+   
+if (confirm('តើលោកគ្រូពិតជាចង់លុបឈ្មោះសិស្សទាំងអស់ចេញមែនទេ?')) {  
+ masterStudents = [];  
+ saveData();  
+ renderClassCheckboxes();  
+ filterStudentWheelData();  
+ renderStudentList();  
+ drawWheel('student');  
+ document.getElementById('groupsGrid').innerHTML = '<div style="color: #7f8c8d; font-size: 0.9rem;">សូមចុចប៊ូតុង "បែងចែកក្រុម" ដើម្បីបង្កើតក្រុមដោយស្វ័យប្រវត្តិ។</div>';  
+ alert('បានលុបឈ្មោះសិស្សទាំងអស់រួចរាល់!');  
+ }  
+ }  
+  
+ function renderStudentList() {  
+ const container = document.getElementById('studentList');  
+ let filtered = masterStudents.map((s, index) => ({ ...s, originalIndex: index }));  
+   
+if (!selectedClasses.includes("ALL") && selectedClasses.length > 0) {  
+ filtered = filtered.filter(s => selectedClasses.includes(s.className || "7A"));  
+ }  
+  
+ if (filtered.length === 0) {  
+ container.innerHTML = '<div style="text-align:center; color:#888; font-size:0.85rem; padding:10px;">គ្មានឈ្មោះសិស្ស</div>';  
+ return;  
+ }  
+  
+ container.innerHTML = filtered.map(s => `  
+ <div class="item-tag">  
+ <span>${s.name} (${s.gender}) - <b style="color:#2980b9;">${s.className || '7A'}</b></span>  
+ <button onclick="removeStudent(${s.originalIndex})">លុប</button>  
+ </div>  
+ `).join('');  
+ }  
+  
+ // 🔧 អនុគមន៍បែងចែកក្រុមដែលបានកែសម្រួលថ្មី (ចែកស្មើគ្នា ១០០% និងស្មើភេទ)  
+ function generateEqualGroups() {  
+ const groupCount = parseInt(document.getElementById('numGroups').value);  
+ let sourceStudents = (selectedClasses.includes("ALL") || selectedClasses.length === 0)   
+? masterStudents   
+: masterStudents.filter(s => selectedClasses.includes(s.className || "7A"));  
+  
+ if (isNaN(groupCount) || groupCount < 1) return alert('សូមបញ្ចូលចំនួនក្រុមឱ្យបានត្រឹមត្រូវ!');  
+ if (sourceStudents.length < groupCount) return alert('ចំនួនសិស្សសរុបតិចជាងចំនួនក្រុម!');  
+  
+ // បំបែកតាមភេទ និងច្របល់ (Shuffle)  
+ let males = shuffleArray(sourceStudents.filter(s => normalizeGender(s.gender) === 'ប្រុស'));  
+ let females = shuffleArray(sourceStudents.filter(s => normalizeGender(s.gender) === 'ស្រី'));  
+  
+ // បង្កើត Array សម្រាប់រក្សាក្រុម  
+ let groups = Array.from({ length: groupCount }, () => []);  
+  
+ // កំណត់ Index ដើមសម្រាប់ចែកក្រុមតពីគ្នា កុំឱ្យធ្លាក់លើក្រុមទី១ រហូត  
+ let currentGroupIndex = 0;  
+  
+ // ១. ចែកសិស្សប្រុស  
+ males.forEach((student) => {  
+ groups[currentGroupIndex].push(student);  
+ currentGroupIndex = (currentGroupIndex + 1) % groupCount;  
+ });  
+  
+ // ២. ចែកសិស្សស្រី (ចែកបន្ត Index ពីសិស្សប្រុស ដើម្បីឱ្យតុល្យភាពសរុបក្នុងក្រុមស្មើគ្នា)  
+ females.forEach((student) => {  
+ groups[currentGroupIndex].push(student);  
+ currentGroupIndex = (currentGroupIndex + 1) % groupCount;  
+ });  
+  
+ renderGroups(groups);  
+ }  
+  
+ function shuffleArray(array) {  
+ let arr = [...array];  
+ for (let i = arr.length - 1; i > 0; i--) {  
+ const j = Math.floor(Math.random() * (i + 1));  
+ [arr[i], arr[j]] = [arr[j], arr[i]];  
+ }  
+ return arr;  
+ }  
+  
+ function renderGroups(groups) {  
+ const container = document.getElementById('groupsGrid');  
+ container.innerHTML = groups.map((group, i) => {  
+ const maleCount = group.filter(s => normalizeGender(s.gender) === 'ប្រុស').length;  
+ const femaleCount = group.filter(s => normalizeGender(s.gender) === 'ស្រី').length;  
+  
+ return `  
+ <div class="group-card">  
+ <h4>ក្រុមទី ${i + 1} (សរុប៖ ${group.length}នាក់)</h4>  
+ <div style="font-size:0.8rem; color:#444; margin-bottom:6px; background:#eef2f7; padding:4px 8px; border-radius:4px;">  
+ 👦 ប្រុស: <b>${maleCount}</b> | 👧 ស្រី: <b>${femaleCount}</b>  
+ </div>  
+ <ul>  
+ ${group.map(s => `  
+ <li>  
+ <span>${s.name} (${s.className || '7A'})</span>  
+ <span class="${normalizeGender(s.gender) === 'ប្រុស' ? 'badge-m' : 'badge-f'}">(${s.gender})</span>  
+ </li>  
+ `).join('')}  
+ </ul>  
+ </div>  
+ `;  
+ }).join('');  
+ }  
+  
+ function addExercise() {  
+ const textInput = document.getElementById('exerciseText');  
+ const fileInput = document.getElementById('exerciseImage');  
+  
+ if (!textInput.value.trim() && !fileInput.files[0]) {  
+ return alert('សូមបញ្ចូលអត្ថបទ ឬជ្រើសរើសរូបភាពលំហាត់!');  
+ }  
+  
+ if (fileInput.files[0]) {  
+ const reader = new FileReader();  
+ reader.onload = function(e) {  
+ exercises.push({ text: textInput.value.trim() || 'រូបភាពលំហាត់', image: e.target.result });  
+ saveData();  
+ resetExerciseInput();  
+ };  
+ reader.readAsDataURL(fileInput.files[0]);  
+ } else {  
+ exercises.push({ text: textInput.value.trim(), image: null });  
+ saveData();  
+ resetExerciseInput();  
+ }  
+ }  
+  
+ function resetExerciseInput() {  
+ document.getElementById('exerciseText').value = '';  
+ document.getElementById('exerciseImage').value = '';  
+ renderExerciseList();  
+ drawWheel('exercise');  
+ }  
+  
+ function removeExercise(index) {  
+ exercises.splice(index, 1);  
+ saveData();  
+ renderExerciseList();  
+ drawWheel('exercise');  
+ }  
+  
+ function renderExerciseList() {  
+ const container = document.getElementById('exerciseList');  
+ container.innerHTML = exercises.map((ex, i) => `  
+ <div class="item-tag">  
+ <span>${ex.text} ${ex.image ? '📷' : ''}</span>  
+ <button onclick="removeExercise(${i})">លុប</button>  
+ </div>  
+ `).join('');  
+ }  
+  
+ function drawWheel(type) {  
+ const canvas = document.getElementById(type === 'student' ? 'studentCanvas' : 'exerciseCanvas');  
+ const ctx = canvas.getContext('2d');  
+ const items = type === 'student' ? wheelStudents : exercises;  
+ const numItems = items.length;  
+  
+ ctx.clearRect(0, 0, canvas.width, canvas.height);  
+  
+ if (numItems === 0) {  
+ ctx.beginPath();  
+ ctx.arc(140, 140, 130, 0, 2 * Math.PI);  
+ ctx.fillStyle = '#e0e0e0';  
+ ctx.fill();  
+ ctx.fillStyle = '#7f8c8d';  
+ ctx.font = "bold 14px Kantumruy Pro";  
+ ctx.textAlign = "center";  
+ ctx.fillText("អស់ទិន្នន័យ", 140, 145);  
+ return;  
+ }  
+  
+ const arcSize = (2 * Math.PI) / numItems;  
+  
+ for (let i = 0; i < numItems; i++) {  
+ const angle = currentAngles[type] + i * arcSize;  
+ ctx.beginPath();  
+ ctx.arc(140, 140, 130, angle, angle + arcSize);  
+ ctx.lineTo(140, 140);  
+ ctx.fillStyle = colors[i % colors.length];  
+ ctx.fill();  
+ ctx.stroke();  
+  
+ ctx.save();  
+ ctx.translate(140, 140);  
+ ctx.rotate(angle + arcSize / 2);  
+ ctx.textAlign = "right";  
+ ctx.fillStyle = "white";  
+ ctx.font = "bold 12px Kantumruy Pro";  
+   
+let label = type === 'student' ? items[i].name : items[i].text;  
+ if (label.length > 12) label = label.substring(0, 10) + '...';  
+ ctx.fillText(label, 120, 4);  
+ ctx.restore();  
+ }  
+ }  
+  
+ function spinWheel(type) {  
+ if (isSpinning[type]) return;  
+  
+ const items = type === 'student' ? wheelStudents : exercises;  
+ if (items.length === 0) return alert('មិនទាន់មានទិន្នន័យសម្រាប់បង្វិលទេ!');  
+  
+ currentActiveType = type;  
+ isSpinning[type] = true;  
+ const spinDuration = 4000;  
+ const startAngle = currentAngles[type];  
+ const extraDegrees = Math.floor(Math.random() * 360) + 1440;  
+ const targetAngle = startAngle + (extraDegrees * Math.PI / 180);  
+ const startTime = performance.now();  
+  
+ function animate(currentTime) {  
+ const elapsed = currentTime - startTime;  
+ if (elapsed < spinDuration) {  
+ const progress = elapsed / spinDuration;  
+ const factor = 1 - Math.pow(1 - progress, 3);  
+ currentAngles[type] = startAngle + (targetAngle - startAngle) * factor;  
+ drawWheel(type);  
+ requestAnimationFrame(animate);  
+ } else {  
+ currentAngles[type] = targetAngle % (2 * Math.PI);  
+ drawWheel(type);  
+ isSpinning[type] = false;  
+ showResult(type);  
+ }  
+ }  
+ requestAnimationFrame(animate);  
+ }  
+  
+ function showResult(type) {  
+ const items = type === 'student' ? wheelStudents : exercises;  
+ const numItems = items.length;  
+ const arcSize = (2 * Math.PI) / numItems;  
+  
+ let effectiveAngle = (1.5 * Math.PI - currentAngles[type]) % (2 * Math.PI);  
+ if (effectiveAngle < 0) effectiveAngle += 2 * Math.PI;  
+  
+ lastSelectedIndex = Math.floor(effectiveAngle / arcSize) % numItems;  
+ const result = items[lastSelectedIndex];  
+  
+ if (type === 'student') {  
+ const textContent = `${result.name} (${result.gender}) - ថ្នាក់ ${result.className || '7A'}`;  
+ document.getElementById('studentResult').innerHTML =   
+`🎉 សិស្សដែលជ្រើសរើស៖ <span style="color:#e74c3c;">${result.name}</span> (${result.gender})`;  
+ openModal('🎉 ឈ្មោះសិស្សដែលបានជ្រើសរើស', textContent);  
+ } else {  
+ let html = `🎯 លំហាត់ដែលទទួលបាន៖ <br><span style="color:#8e44ad;">${result.text}</span>`;  
+ let modalHtml = `${result.text}`;  
+ if (result.image) {  
+ html += `<br><img src="${result.image}" alt="លំហាត់">`;  
+ modalHtml += `<br><img src="${result.image}" alt="លំហាត់">`;  
+ }  
+ document.getElementById('exerciseResult').innerHTML = html;  
+ openModal('🎯 លំហាត់ដែលបានជ្រើសរើស', modalHtml);  
+ }  
+ }  
+  
+ function openModal(title, content) {  
+ document.getElementById('modalTitle').innerText = title;  
+ document.getElementById('modalResultText').innerHTML = content;  
+ document.getElementById('resultModal').style.display = 'flex';  
+ }  
+  
+ function closeModal() {  
+ document.getElementById('resultModal').style.display = 'none';  
+ }  
+  
+ function spinAgain() {  
+ closeModal();  
+ spinWheel(currentActiveType);  
+ }  
+  
+ function removeAndSpinAgain() {  
+ if (lastSelectedIndex === -1 || !currentActiveType) return;  
+  
+ if (currentActiveType === 'student') {  
+ wheelStudents.splice(lastSelectedIndex, 1);  
+ drawWheel('student');  
+ if (wheelStudents.length === 0) {  
+ closeModal();  
+ alert('អស់ឈ្មោះសិស្សក្នុងថាសបង្វិលហើយ!');  
+ return;  
+ }  
+ } else if (currentActiveType === 'exercise') {  
+ exercises.splice(lastSelectedIndex, 1);  
+ saveData();  
+ renderExerciseList();  
+ drawWheel('exercise');  
+ if (exercises.length === 0) {  
+ closeModal();  
+ alert('អស់លំហាត់ក្នុងថាសបង្វិលហើយ!');  
+ return;  
+ }  
+ }  
+  
+ closeModal();  
+ spinWheel(currentActiveType);  
+ }  
+ </script>  
+</body>  
 </html>
