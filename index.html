@@ -66,6 +66,35 @@
  .canvas-container { position: relative; width: 280px; height: 280px; margin: 0 auto 15px auto; }  
  canvas { width: 100%; height: 100%; border-radius: 50%; }  
  .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid #e74c3c; z-index: 10; }  
+   
+ /* 🌟 រចនាប័ទ្មសម្រាប់ផ្កាយចំកណ្ដាលដែលអាចចុចបាន */  
+ .wheel-center-star {  
+     position: absolute;  
+     top: 50%;  
+     left: 50%;  
+     transform: translate(-50%, -50%);  
+     width: 50px;  
+     height: 50px;  
+     background: white;  
+     border: 3px solid #f1c40f;  
+     border-radius: 50%;  
+     display: flex;  
+     justify-content: center;  
+     align-items: center;  
+     font-size: 24px;  
+     box-shadow: 0 4px 8px rgba(0,0,0,0.3);  
+     z-index: 5;  
+     cursor: pointer;  
+     transition: transform 0.1s, background-color 0.2s;  
+ }  
+ .wheel-center-star:hover {  
+     background: #fff9e6;  
+     transform: translate(-50%, -50%) scale(1.1);  
+ }  
+ .wheel-center-star:active {  
+     transform: translate(-50%, -50%) scale(0.95);  
+ }  
+
  .btn-spin { background-color: #2980b9; font-size: 1rem; padding: 10px; }  
  .btn-spin:hover { background-color: #1f6391; }  
  .result-box { margin-top: 12px; padding: 10px; background: #f8f9fa; border-radius: 6px; min-height: 45px; font-weight: bold; color: #2c3e50; font-size: 0.95rem; }  
@@ -158,6 +187,8 @@
  <h3 style="margin-top:0;">ថាសបង្វិលឈ្មោះសិស្ស <br><span id="currentWheelClass" style="color:#e67e22; font-size:0.85rem;">(គ្រប់ថ្នាក់)</span></h3>  
  <div class="canvas-container">  
  <div class="pointer"></div>  
+ <!-- 🌟 ផ្កាយចំកណ្ដាលថាសសិស្ស (អាចចុចដើម្បីបង្វិលបាន) -->  
+ <div class="wheel-center-star" onclick="spinWheel('student')" title="ចុចដើម្បីបង្វិល">⭐</div>  
  <canvas id="studentCanvas" width="280" height="280"></canvas>  
  </div>  
  <button class="btn-spin" onclick="spinWheel('student')">បង្វិលជ្រើសរើសសិស្ស</button>  
@@ -168,6 +199,8 @@
  <h3 style="margin-top:0;">ថាសបង្វិលលំហាត់</h3>  
  <div class="canvas-container">  
  <div class="pointer"></div>  
+ <!-- 🌟 ផ្កាយចំកណ្ដាលថាសលំហាត់ (អាចចុចដើម្បីបង្វិលបាន) -->  
+ <div class="wheel-center-star" onclick="spinWheel('exercise')" title="ចុចដើម្បីបង្វិល">⭐</div>  
  <canvas id="exerciseCanvas" width="280" height="280"></canvas>  
  </div>  
  <button class="btn-spin" onclick="spinWheel('exercise')" style="background-color: #8e44ad;">បង្វិលជ្រើសរើសលំហាត់</button>  
@@ -197,11 +230,11 @@
  </div>  
   
  <script>  
- // 🎵 ប្រព័ន្ធសំឡេង (Audio Effects)
- const spinSound = new Audio('son.mp3'); 
- const winSound = new Audio('son1.mp3');   
- spinSound.volume = 0.5;
- winSound.volume = 0.7;
+ // 🎵 ប្រព័ន្ធសំឡេង (Audio Effects)  
+ const spinSound = new Audio('son.mp3');   
+ const winSound = new Audio('son1.mp3');     
+ spinSound.volume = 0.5;  
+ winSound.volume = 0.7;  
 
  // ទាញយកទិន្នន័យពី LocalStorage ប្រសិនបើមាន  
  let masterStudents = JSON.parse(localStorage.getItem('wheel_students')) || [];  
@@ -395,11 +428,11 @@
  drawWheel('student');  
  }  
   
- // ✏️ អនុគមន៍សម្រាប់កែប្រែឈ្មោះសិស្ស
+ // ✏️ អនុគមន៍សម្រាប់កែប្រែឈ្មោះសិស្ស  
  function editStudent(originalIndex) {  
  const student = masterStudents[originalIndex];  
  const newName = prompt("កែប្រែឈ្មោះសិស្ស:", student.name);  
- if (newName === null) return; // បើចុច Cancel
+ if (newName === null) return;  
   
  const trimmedName = newName.trim();  
  if (!trimmedName) {  
