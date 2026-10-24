@@ -47,14 +47,19 @@
  button { background-color: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.2s; }  
  button:hover { background-color: #219150; }  
    
-.btn-clear-all { background-color: #e74c3c; margin-top: 8px; font-size: 0.85rem; padding: 8px; }  
+ .btn-clear-all { background-color: #e74c3c; margin-top: 8px; font-size: 0.85rem; padding: 8px; }  
  .btn-clear-all:hover { background-color: #c0392b; }  
   
  .btn-group-gen { background-color: #e67e22; margin-top: 10px; }  
  .btn-group-gen:hover { background-color: #d35400; }  
  .item-list { max-height: 180px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee; padding: 5px; border-radius: 6px; }  
- .item-tag { display: flex; justify-content: space-between; align-items: center; background: #eef2f7; padding: 6px 10px; margin-bottom: 5px; border-radius: 4px; font-size: 0.85rem; }  
- .item-tag button { width: auto; padding: 2px 6px; background: #e74c3c; font-size: 0.75rem; }  
+ .item-tag { display: flex; justify-content: space-between; align-items: center; background: #eef2f7; padding: 6px 10px; margin-bottom: 5px; border-radius: 4px; font-size: 0.85rem; gap: 5px; }  
+ .item-tag button { width: auto; padding: 2px 6px; font-size: 0.75rem; }  
+ .btn-edit { background: #f39c12 !important; }  
+ .btn-edit:hover { background: #d68910 !important; }  
+ .btn-delete { background: #e74c3c !important; }  
+ .btn-delete:hover { background: #c0392b !important; }  
+
  .main-area { display: flex; flex-direction: column; gap: 20px; }  
  .wheels-area { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }  
  .wheel-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }  
@@ -192,6 +197,12 @@
  </div>  
   
  <script>  
+ // 🎵 ប្រព័ន្ធសំឡេង (Audio Effects)
+ const spinSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2004/2004-preview.mp3'); 
+ const winSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3');   
+ spinSound.volume = 0.5;
+ winSound.volume = 0.7;
+
  // ទាញយកទិន្នន័យពី LocalStorage ប្រសិនបើមាន  
  let masterStudents = JSON.parse(localStorage.getItem('wheel_students')) || [];  
   
@@ -331,10 +342,10 @@
   
  if (nameVal && String(nameVal).trim() !== '') {  
  importedStudents.push({   
-name: String(nameVal).trim(),   
-gender: normalizeGender(genderVal),   
-className: String(classVal).trim()   
-});  
+ name: String(nameVal).trim(),   
+ gender: normalizeGender(genderVal),   
+ className: String(classVal).trim()   
+ });  
  }  
  });  
   
@@ -347,7 +358,7 @@ className: String(classVal).trim()
  renderStudentList();  
  drawWheel('student');  
    
-alert(`បានបន្ថែមសិស្សចំនួន ${importedStudents.length} នាក់ទៀតជោគជ័យ!\nសរុបសិស្សក្នុងប្រព័ន្ធមាន៖ ${masterStudents.length} នាក់។`);  
+ alert(`បានបន្ថែមសិស្សចំនួន ${importedStudents.length} នាក់ទៀតជោគជ័យ!\nសរុបសិស្សក្នុងប្រព័ន្ធមាន៖ ${masterStudents.length} នាក់។`);  
  } else {  
  alert('មិនអាចរកឃើញឈ្មោះសិស្សក្នុង Excel ទេ។ សូមពិនិត្យមើល Header ជួរឈរ!');  
  }  
@@ -369,15 +380,41 @@ alert(`បានបន្ថែមសិស្សចំនួន ${importedStude
  const className = classInput.value.trim() || '7A';  
   
  const newStudent = {   
-name: nameInput.value.trim(),   
-gender: normalizeGender(genderInput.value),   
-className: className   
-};  
+ name: nameInput.value.trim(),   
+ gender: normalizeGender(genderInput.value),   
+ className: className   
+ };  
    
-masterStudents.push(newStudent);  
+ masterStudents.push(newStudent);  
  saveData();  
    
-nameInput.value = '';  
+ nameInput.value = '';  
+ renderClassCheckboxes();  
+ filterStudentWheelData();  
+ renderStudentList();  
+ drawWheel('student');  
+ }  
+  
+ // ✏️ អនុគមន៍សម្រាប់កែប្រែឈ្មោះសិស្ស
+ function editStudent(originalIndex) {  
+ const student = masterStudents[originalIndex];  
+ const newName = prompt("កែប្រែឈ្មោះសិស្ស:", student.name);  
+ if (newName === null) return; // បើចុច Cancel
+  
+ const trimmedName = newName.trim();  
+ if (!trimmedName) {  
+ alert("ឈ្មោះមិនអាចទទេបានទេ!");  
+ return;  
+ }  
+  
+ const newGenderInput = prompt("កែប្រែភេទ (ប្រុស ឬ ស្រី):", student.gender);  
+ const newClassInput = prompt("កែប្រែថ្នាក់រៀន:", student.className || "7A");  
+  
+ masterStudents[originalIndex].name = trimmedName;  
+ if (newGenderInput !== null) masterStudents[originalIndex].gender = normalizeGender(newGenderInput);  
+ if (newClassInput !== null) masterStudents[originalIndex].className = newClassInput.trim() || "7A";  
+  
+ saveData();  
  renderClassCheckboxes();  
  filterStudentWheelData();  
  renderStudentList();  
@@ -396,7 +433,7 @@ nameInput.value = '';
  function clearAllStudents() {  
  if (masterStudents.length === 0) return alert('គ្មានឈ្មោះសិស្សត្រូវលុបទេ!');  
    
-if (confirm('តើលោកគ្រូពិតជាចង់លុបឈ្មោះសិស្សទាំងអស់ចេញមែនទេ?')) {  
+ if (confirm('តើលោកគ្រូពិតជាចង់លុបឈ្មោះសិស្សទាំងអស់ចេញមែនទេ?')) {  
  masterStudents = [];  
  saveData();  
  renderClassCheckboxes();  
@@ -412,7 +449,7 @@ if (confirm('តើលោកគ្រូពិតជាចង់លុបឈ្�
  const container = document.getElementById('studentList');  
  let filtered = masterStudents.map((s, index) => ({ ...s, originalIndex: index }));  
    
-if (!selectedClasses.includes("ALL") && selectedClasses.length > 0) {  
+ if (!selectedClasses.includes("ALL") && selectedClasses.length > 0) {  
  filtered = filtered.filter(s => selectedClasses.includes(s.className || "7A"));  
  }  
   
@@ -424,38 +461,34 @@ if (!selectedClasses.includes("ALL") && selectedClasses.length > 0) {
  container.innerHTML = filtered.map(s => `  
  <div class="item-tag">  
  <span>${s.name} (${s.gender}) - <b style="color:#2980b9;">${s.className || '7A'}</b></span>  
- <button onclick="removeStudent(${s.originalIndex})">លុប</button>  
+ <div>  
+ <button class="btn-edit" onclick="editStudent(${s.originalIndex})">កែ</button>  
+ <button class="btn-delete" onclick="removeStudent(${s.originalIndex})">លុប</button>  
+ </div>  
  </div>  
  `).join('');  
  }  
   
- // 🔧 អនុគមន៍បែងចែកក្រុមដែលបានកែសម្រួលថ្មី (ចែកស្មើគ្នា ១០០% និងស្មើភេទ)  
  function generateEqualGroups() {  
  const groupCount = parseInt(document.getElementById('numGroups').value);  
  let sourceStudents = (selectedClasses.includes("ALL") || selectedClasses.length === 0)   
-? masterStudents   
-: masterStudents.filter(s => selectedClasses.includes(s.className || "7A"));  
+ ? masterStudents   
+ : masterStudents.filter(s => selectedClasses.includes(s.className || "7A"));  
   
  if (isNaN(groupCount) || groupCount < 1) return alert('សូមបញ្ចូលចំនួនក្រុមឱ្យបានត្រឹមត្រូវ!');  
  if (sourceStudents.length < groupCount) return alert('ចំនួនសិស្សសរុបតិចជាងចំនួនក្រុម!');  
   
- // បំបែកតាមភេទ និងច្របល់ (Shuffle)  
  let males = shuffleArray(sourceStudents.filter(s => normalizeGender(s.gender) === 'ប្រុស'));  
  let females = shuffleArray(sourceStudents.filter(s => normalizeGender(s.gender) === 'ស្រី'));  
   
- // បង្កើត Array សម្រាប់រក្សាក្រុម  
  let groups = Array.from({ length: groupCount }, () => []);  
-  
- // កំណត់ Index ដើមសម្រាប់ចែកក្រុមតពីគ្នា កុំឱ្យធ្លាក់លើក្រុមទី១ រហូត  
  let currentGroupIndex = 0;  
   
- // ១. ចែកសិស្សប្រុស  
  males.forEach((student) => {  
  groups[currentGroupIndex].push(student);  
  currentGroupIndex = (currentGroupIndex + 1) % groupCount;  
  });  
   
- // ២. ចែកសិស្សស្រី (ចែកបន្ត Index ពីសិស្សប្រុស ដើម្បីឱ្យតុល្យភាពសរុបក្នុងក្រុមស្មើគ្នា)  
  females.forEach((student) => {  
  groups[currentGroupIndex].push(student);  
  currentGroupIndex = (currentGroupIndex + 1) % groupCount;  
@@ -540,7 +573,7 @@ if (!selectedClasses.includes("ALL") && selectedClasses.length > 0) {
  container.innerHTML = exercises.map((ex, i) => `  
  <div class="item-tag">  
  <span>${ex.text} ${ex.image ? '📷' : ''}</span>  
- <button onclick="removeExercise(${i})">លុប</button>  
+ <button class="btn-delete" onclick="removeExercise(${i})">លុប</button>  
  </div>  
  `).join('');  
  }  
@@ -583,7 +616,7 @@ if (!selectedClasses.includes("ALL") && selectedClasses.length > 0) {
  ctx.fillStyle = "white";  
  ctx.font = "bold 12px Kantumruy Pro";  
    
-let label = type === 'student' ? items[i].name : items[i].text;  
+ let label = type === 'student' ? items[i].name : items[i].text;  
  if (label.length > 12) label = label.substring(0, 10) + '...';  
  ctx.fillText(label, 120, 4);  
  ctx.restore();  
@@ -598,6 +631,10 @@ let label = type === 'student' ? items[i].name : items[i].text;
   
  currentActiveType = type;  
  isSpinning[type] = true;  
+  
+ spinSound.currentTime = 0;  
+ spinSound.play().catch(e => console.log("Audio play blocked:", e));  
+  
  const spinDuration = 4000;  
  const startAngle = currentAngles[type];  
  const extraDegrees = Math.floor(Math.random() * 360) + 1440;  
@@ -616,6 +653,11 @@ let label = type === 'student' ? items[i].name : items[i].text;
  currentAngles[type] = targetAngle % (2 * Math.PI);  
  drawWheel(type);  
  isSpinning[type] = false;  
+  
+ spinSound.pause();  
+ winSound.currentTime = 0;  
+ winSound.play().catch(e => console.log("Audio play blocked:", e));  
+
  showResult(type);  
  }  
  }  
@@ -636,7 +678,7 @@ let label = type === 'student' ? items[i].name : items[i].text;
  if (type === 'student') {  
  const textContent = `${result.name} (${result.gender}) - ថ្នាក់ ${result.className || '7A'}`;  
  document.getElementById('studentResult').innerHTML =   
-`🎉 សិស្សដែលជ្រើសរើស៖ <span style="color:#e74c3c;">${result.name}</span> (${result.gender})`;  
+ `🎉 សិស្សដែលជ្រើសរើស៖ <span style="color:#e74c3c;">${result.name}</span> (${result.gender})`;  
  openModal('🎉 ឈ្មោះសិស្សដែលបានជ្រើសរើស', textContent);  
  } else {  
  let html = `🎯 លំហាត់ដែលទទួលបាន៖ <br><span style="color:#8e44ad;">${result.text}</span>`;  
